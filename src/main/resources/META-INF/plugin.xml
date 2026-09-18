@@ -1,0 +1,63 @@
+<idea-plugin>
+    <id>com.flutterassetsgen</id>
+    <name>Flutter Assets Generator (Modern)</name>
+    <vendor url="https://github.com/">Flutter Assets Generator (Modern) contributors</vendor>
+    <vendor
+        url="https://github.com/sujalrabadiyab/FlutterAssetsGeneratorModern"
+        email="sujalrabadiya.beetonz@email.com">
+        Flutter Assets Generator (Modern)
+    </vendor>
+
+    <description><![CDATA[
+        <p>
+        Regenerates a flat, type-safe <code>Assets.dart</code> index for a Flutter project's
+        <code>assets/</code> directory with a single keyboard shortcut: <b>Alt+G</b>
+        (<b>&#8997;G</b> on macOS).
+        </p>
+        <p>
+        A small, modern replacement for the classic <i>FlutterAssetsGenerator 2.4.2</i> plugin.
+        Reproduces its flat asset-naming convention (e.g. <code>Assets.imagesLogo</code>, not the
+        newer hierarchical <code>Assets.images.logo</code> style) with no manual asset/folder
+        selection required: just press the shortcut and the whole <code>assets/</code> tree is
+        rescanned and <code>lib/generated/Assets.dart</code> is rewritten from scratch, so added,
+        removed, and renamed assets are always reflected exactly.
+        </p>
+    ]]></description>
+
+    <!-- Only generic IntelliJ Platform APIs are used (file I/O, actions, notifications,
+         persistent settings) - no Android- or Dart-plugin-specific classes - so this plugin
+         only needs the base platform module and works in Android Studio as well as plain
+         IntelliJ IDEA with the Flutter/Dart plugins installed. -->
+    <depends>com.intellij.modules.platform</depends>
+        <depends>com.intellij.modules.java</depends>
+
+    <actions>
+        <action id="FlutterAssetsGenerator.GenerateAssets"
+                class="com.flutterassetsgen.actions.GenerateAssetsAction"
+                text="Generate Flutter Assets"
+                description="Scan the assets directory and regenerate Assets.dart"
+                icon="AllIcons.Actions.Refresh">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+            <!-- Alt+G on Windows/Linux, Option(Alt)+G on macOS. If this collides with an
+                 existing shortcut in your keymap, the IDE will prompt you to resolve the
+                 conflict on install; either way you can always rebind it under
+                 Settings | Keymap | Plugins | Flutter Assets Generator (Modern). -->
+            <keyboard-shortcut keymap="$default" first-keystroke="alt G"/>
+        </action>
+    </actions>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <notificationGroup id="FlutterAssetsGenerator.Notifications"
+                            displayType="BALLOON"
+                            isLogByDefault="true"/>
+
+        <projectService serviceImplementation="com.flutterassetsgen.settings.FlutterAssetsGeneratorSettings"/>
+
+        <projectConfigurable
+                parentId="tools"
+                instance="com.flutterassetsgen.settings.FlutterAssetsGeneratorConfigurable"
+                id="com.flutterassetsgen.settings.FlutterAssetsGeneratorConfigurable"
+                displayName="Flutter Assets Generator"
+                nonDefaultProject="false"/>
+    </extensions>
+</idea-plugin>
