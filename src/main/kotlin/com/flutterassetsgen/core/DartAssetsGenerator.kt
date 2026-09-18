@@ -1,4 +1,4 @@
-package com.flutterassetsgen.core
+package bys7.flutterassetsgen.core
 
 /**
  * @param identifier the generated Dart constant name, e.g. "imagesLogo"

@@ -1,4 +1,4 @@
-package com.flutterassetsgen.settings
+package bys7.flutterassetsgen.settings
 
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project

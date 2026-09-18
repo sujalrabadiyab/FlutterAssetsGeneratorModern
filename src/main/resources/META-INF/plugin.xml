@@ -1,5 +1,5 @@
 <idea-plugin>
-    <id>com.flutterassetsgen</id>
+    <id>bys7.flutterassetsgen</id>
     <name>Flutter Assets Generator (Modern)</name>
     <vendor url="https://github.com/">Flutter Assets Generator (Modern) contributors</vendor>
     <vendor
@@ -33,7 +33,7 @@
 
     <actions>
         <action id="FlutterAssetsGenerator.GenerateAssets"
-                class="com.flutterassetsgen.actions.GenerateAssetsAction"
+                class="bys7.flutterassetsgen.actions.GenerateAssetsAction"
                 text="Generate Flutter Assets"
                 description="Scan the assets directory and regenerate Assets.dart"
                 icon="AllIcons.Actions.Refresh">
@@ -51,12 +51,12 @@
                             displayType="BALLOON"
                             isLogByDefault="true"/>
 
-        <projectService serviceImplementation="com.flutterassetsgen.settings.FlutterAssetsGeneratorSettings"/>
+        <projectService serviceImplementation="bys7.flutterassetsgen.settings.FlutterAssetsGeneratorSettings"/>
 
         <projectConfigurable
                 parentId="tools"
-                instance="com.flutterassetsgen.settings.FlutterAssetsGeneratorConfigurable"
-                id="com.flutterassetsgen.settings.FlutterAssetsGeneratorConfigurable"
+                instance="bys7.flutterassetsgen.settings.FlutterAssetsGeneratorConfigurable"
+                id="bys7.flutterassetsgen.settings.FlutterAssetsGeneratorConfigurable"
                 displayName="Flutter Assets Generator"
                 nonDefaultProject="false"/>
     </extensions>

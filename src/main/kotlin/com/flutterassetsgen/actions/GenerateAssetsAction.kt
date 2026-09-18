@@ -1,11 +1,11 @@
-package com.flutterassetsgen.actions
+package bys7.flutterassetsgen.actions
 
-import com.flutterassetsgen.core.AssetScanner
-import com.flutterassetsgen.core.BuildResult
-import com.flutterassetsgen.core.DartAssetsGenerator
-import com.flutterassetsgen.core.FlutterProjectDetector
-import com.flutterassetsgen.notifications.Notifier
-import com.flutterassetsgen.settings.FlutterAssetsGeneratorSettings
+import bys7.flutterassetsgen.core.AssetScanner
+import bys7.flutterassetsgen.core.BuildResult
+import bys7.flutterassetsgen.core.DartAssetsGenerator
+import bys7.flutterassetsgen.core.FlutterProjectDetector
+import bys7.flutterassetsgen.notifications.Notifier
+import bys7.flutterassetsgen.settings.FlutterAssetsGeneratorSettings
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent

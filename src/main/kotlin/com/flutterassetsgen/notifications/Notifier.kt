@@ -1,4 +1,4 @@
-package com.flutterassetsgen.notifications
+package bys7.flutterassetsgen.notifications
 
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType

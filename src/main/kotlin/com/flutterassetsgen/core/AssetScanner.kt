@@ -1,4 +1,4 @@
-package com.flutterassetsgen.core
+package bys7.flutterassetsgen.core
 
 import java.io.File
 

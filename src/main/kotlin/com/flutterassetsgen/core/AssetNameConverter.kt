@@ -1,4 +1,4 @@
-package com.flutterassetsgen.core
+package bys7.flutterassetsgen.core
 
 /**
  * Converts an asset's path (relative to the assets root) into a flat,

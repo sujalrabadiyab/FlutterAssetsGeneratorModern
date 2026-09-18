@@ -1,4 +1,4 @@
-package com.flutterassetsgen.settings
+package bys7.flutterassetsgen.settings
 
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.RoamingType
