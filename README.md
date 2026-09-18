@@ -1,193 +1,45 @@
-# FlutterAssetsGenerator (Modern)
+# FlutterAssetsGenerator
 
-A small Android Studio / IntelliJ plugin that regenerates a flat, type-safe
-`Assets.dart` index for a Flutter project's `assets/` directory. Press
-**Alt+G** (⌥G on macOS) and it's done - no dialogs, no manual selection.
+A small, modern **Android Studio / IntelliJ IDEA plugin** that generates a flat, type-safe `Assets.dart` file from your Flutter project's `assets/` directory.
 
-This is a from-scratch, modern-API reimplementation that reproduces the
-useful behavior of the old **FlutterAssetsGenerator 2.4.2** plugin
-(`com.crzsc.FlutterAssetsGenerator`, https://github.com/cr1992/FlutterAssetsGenerator),
-which is no longer compatible with current Android Studio. It does **not**
-copy any of that plugin's code or its old, now-incompatible IntelliJ APIs -
-it's built fresh against the current IntelliJ Platform Gradle Plugin (2.x).
+Press **Alt+G** on Windows/Linux or **⌥G** on macOS — that's it.
 
-## What behavior was reproduced from 2.4.2, and how we know
+No dialogs. No manual asset selection. No background file watcher.
 
-The upstream project's `master` branch has since been rewritten into a 3.x
-generator with a completely different, *hierarchical* API
-(`Assets.images.logo`, typed `AssetGenImage`/`SvgGenImage` wrappers, YAML
-configuration in `pubspec.yaml`, etc.) - not what this task asked for.
-However, that same upstream README documents an explicit
-**`style: legacy`** compatibility mode that it added specifically so 3.x
-users could keep the old 2.x output shape:
+---
 
-> **Legacy Compatibility**: Supports `style: legacy` to generate flat
-> variable names (e.g. `Assets.imagesLogo`) for easy migration.
->
-> ...`named_with_parent: true` - Prefix variable names with parent
-> directory names. Default: `true`
->
-> ...`leaf_type` - Default: `class` for `robust`, **`string` for `legacy`**
+## ✨ Features
 
-That confirms, in the authors' own words, exactly the three behaviors this
-plugin reproduces from 2.4.2:
+* 🚀 Generate assets with a single shortcut: **Alt+G**
+* 📁 Recursively scans the project's `assets/` directory
+* 🧩 Generates flat camelCase asset identifiers
+* 🛡️ Automatically handles duplicate identifiers
+* 🧹 Safely sanitizes special characters and invalid Dart identifiers
+* 📄 Generates plain `static const String` asset references
+* ⚡ Runs asset scanning in the background
+* 🔄 Fully regenerates `Assets.dart` on every run
+* 🔔 Shows success, warning, and error notifications
+* ⚙️ Configurable asset directory, output path, and class name
+* 🧪 Uses modern IntelliJ Platform APIs
+* 🖥️ No Android-specific APIs required
 
-1. **Flat, camelCase identifiers** combining every parent directory name
-   under the assets root with the filename (minus extension) -
-   `Assets.imagesLogo`, not `Assets.images.logo`.
-2. **Directory name(s) prefixed onto the identifier** (`named_with_parent`)
-   so that, e.g., `icons/home.png` and `images/home.png` both stay
-   distinguishable (`iconsHome` / `imagesHome`) instead of colliding.
-3. **Plain `static const String` constants** (`leaf_type: string`), not
-   typed asset-wrapper classes - matching the plugin's own historical
-   `2.4.2` marketplace listing, whose only usage example is a bare string
-   constant (`Assets.imageLoading`) passed straight into `Image.asset(...)`.
+Example:
 
-Two things were **not** carried over from 2.4.2, deliberately:
-
-- **File-watching / auto-regeneration on save.** You asked specifically for
-  "press Alt+G", not a background watcher, to keep this small and
-  predictable.
-- **Any Android-plugin-specific or pre-2.x IntelliJ API.** This plugin is
-  built against the current `org.jetbrains.intellij.platform` Gradle
-  plugin (2.x) and only uses generic, stable IntelliJ Platform APIs (file
-  I/O, actions, notifications, persistent settings) - nothing from
-  `org.jetbrains.android` and nothing deprecated.
-
-If you find a specific 2.4.2 naming edge case this doesn't match, it's easy
-to adjust in one place: `AssetNameConverter.kt` (see "Architecture" below).
-
-## Requirements
-
-- **JDK 17+**
-- **Gradle 9.0+** (the included wrapper handles this for you)
-- Android Studio Ladybug (2024.2) or newer to *run/install* the built plugin
-  (see [Compatibility](#android-studio-compatibility) below for how to
-  target older/newer versions)
-
-## Building
-
-```bash
-cd FlutterAssetsGenerator
-./gradlew buildPlugin
+```dart
+Image.asset(Assets.imagesLogo);
 ```
 
-This produces:
+instead of:
 
-```text
-build/distributions/FlutterAssetsGenerator-1.0.0.zip
+```dart
+Image.asset('assets/images/logo.png');
 ```
 
-> The very first build downloads a full Android Studio installer as the
-> compile/test target (`androidStudio(...)` in `build.gradle.kts`), so it
-> can be a large (~1 GB+) one-time download. If you just want a faster
-> local dev loop while editing the plugin, temporarily swap that one line
-> for `intellijIdeaCommunity(properties("platformVersion"))` - this plugin
-> doesn't use any Android-specific classes, so either target compiles and
-> runs the same code.
+---
 
-Other useful tasks:
+## 📦 Example
 
-```bash
-./gradlew runIde          # launch a sandboxed IDE with the plugin installed, for manual testing
-./gradlew verifyPlugin     # run the IntelliJ Plugin Verifier against the configured IDE targets
-./gradlew test             # (no tests included by default, but wired up and ready)
-```
-
-## Installing
-
-1. Run `./gradlew buildPlugin`.
-2. In Android Studio: **Settings → Plugins → ⚙️ (gear icon) → Install
-   Plugin from Disk...**
-3. Select `build/distributions/FlutterAssetsGenerator-1.0.0.zip`.
-4. Restart Android Studio when prompted.
-
-## Usage
-
-1. Open a Flutter project (one with a `pubspec.yaml` at its root) in
-   Android Studio.
-2. Make sure it has an `assets/` directory (configurable - see
-   [Settings](#settings)).
-3. Press **Alt+G** (⌥G on macOS) anywhere in the IDE, or use
-   **Tools → Generate Flutter Assets** from the menu.
-4. `lib/generated/Assets.dart` is created (or completely rewritten) to
-   reflect exactly what's currently under `assets/`. A notification balloon
-   confirms how many assets were written, or explains what went wrong.
-
-Run it again any time after adding, deleting, or renaming assets - the file
-is fully regenerated from scratch every time, so it never accumulates stale
-or duplicate entries.
-
-### Settings
-
-**Settings → Tools → Flutter Assets Generator**
-
-| Setting            | Default                    |
-| ------------------- | --------------------------- |
-| Assets directory     | `assets`                    |
-| Generated file        | `lib/generated/Assets.dart` |
-| Class name            | `Assets`                    |
-
-All three are optional - the plugin works immediately after installation
-with no configuration.
-
-## How Alt+G works
-
-`GenerateAssetsAction` (in `actions/GenerateAssetsAction.kt`) is registered
-in `plugin.xml` with a default `alt G` keyboard shortcut. When triggered it:
-
-1. Runs inside a background `Task` (via `ProgressManager`) so scanning a
-   large assets tree never freezes the IDE UI.
-2. Confirms the project looks like a Flutter project (`pubspec.yaml` exists
-   at the project root) and that the configured assets directory exists -
-   if not, it shows a notification and stops (never throws/crashes the IDE).
-3. Delegates the actual filesystem walk to `AssetScanner.scan(...)`.
-4. Delegates identifier generation + duplicate-collision handling to
-   `DartAssetsGenerator.buildEntries(...)`.
-5. Delegates Dart source rendering to `DartAssetsGenerator.renderDartFile(...)`.
-6. Writes the result to disk and asynchronously refreshes the IDE's virtual
-   file system so the editor picks up the change immediately.
-7. Shows a success/warning/error notification.
-
-If the shortcut conflicts with something already bound in your keymap, the
-IDE's standard "keyboard shortcut conflict" dialog will offer to reassign it
-on plugin install - after that you can always change it yourself under
-**Settings → Keymap → Plugins → Flutter Assets Generator (Modern) → Generate
-Flutter Assets**.
-
-## How the asset-name conversion works
-
-Implemented in `core/AssetNameConverter.kt`, driven by the asset's path
-*relative to the assets root* (e.g. `images/profile/user.png`, not
-`assets/images/profile/user.png`):
-
-1. Split the relative path into: each parent directory segment under the
-   assets root, plus the filename **without its extension**.
-2. Split every one of those segments further into "words" - any run of
-   ASCII letters/digits is a word; everything else (spaces, `-`, `_`, `.`,
-   `@`, parentheses, ...) is treated as a separator and dropped. This is
-   what makes special characters safe.
-3. Join all the words camelCase-style: the very first word is lowercased in
-   full (this becomes the leading directory-name segment), every following
-   word gets its first letter capitalized.
-4. If the resulting identifier would start with a digit (e.g. an asset
-   literally named `2x/icon.png` sitting directly under the assets root),
-   prefix it with `a` so it stays a syntactically valid Dart identifier.
-5. If the resulting identifier happens to be a Dart reserved word (e.g. an
-   asset named `class.png`), append `Asset` to it.
-6. If two different assets would still produce the *same* identifier after
-   all of the above (a true collision, not just sharing a directory), the
-   second one gets a numeric suffix (`imagesHome`, `imagesHome2`, ...)
-   instead of silently overwriting the first, and a warning is included in
-   the notification listing exactly which assets collided.
-
-Deterministic ordering: `AssetScanner` sorts all scanned files by their
-relative path before anything else happens, so re-running Alt+G on an
-unchanged asset tree always produces byte-identical output.
-
-## Example asset trees → generated output
-
-**Example 1** - the tree from the original request:
+Given this asset structure:
 
 ```text
 assets/
@@ -202,6 +54,8 @@ assets/
     └── click.mp3
 ```
 
+The plugin generates:
+
 ```dart
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // Generated by FlutterAssetsGenerator - press Alt+G to regenerate.
@@ -214,155 +68,626 @@ class Assets {
   static const String iconsSettings = 'assets/icons/settings.svg';
   static const String imagesHome = 'assets/images/home.png';
   static const String imagesLogo = 'assets/images/logo.png';
-  static const String imagesProfileUser = 'assets/images/profile/user.png';
+  static const String imagesProfileUser =
+      'assets/images/profile/user.png';
   static const String soundsClick = 'assets/sounds/click.mp3';
 }
 ```
 
-*(Output is sorted by asset path, which is why the order here differs
-slightly from the input tree.)*
+You can then use:
 
-**Example 2** - special characters, numbers, and duplicate-prefix handling:
+```dart
+Image.asset(Assets.imagesLogo);
+```
+
+```dart
+SvgPicture.asset(Assets.iconsSettings);
+```
+
+```dart
+AudioPlayer().play(AssetSource(Assets.soundsClick));
+```
+
+---
+
+# ⌨️ Usage
+
+### 1. Open a Flutter project
+
+The project should contain:
 
 ```text
+pubspec.yaml
 assets/
-├── images/
-│   ├── home_screen.png
-│   ├── old photo.jpg
-│   └── home.png
-├── icons/
-│   ├── user-profile.svg
-│   └── home.png
-└── data/
-    └── app_config.json
 ```
+
+### 2. Generate assets
+
+Press:
+
+**Alt+G**
+
+On macOS:
+
+**⌥G**
+
+Alternatively, use:
+
+**Tools → Generate Flutter Assets**
+
+### 3. Generated file
+
+By default, the plugin creates:
+
+```text
+lib/generated/Assets.dart
+```
+
+Run the command again whenever you add, remove, rename, or move assets.
+
+The file is regenerated from scratch, so stale asset references are automatically removed.
+
+---
+
+# ⚙️ Settings
+
+Open:
+
+**Settings → Tools → Flutter Assets Generator**
+
+| Setting          | Default                     |
+| ---------------- | --------------------------- |
+| Assets directory | `assets`                    |
+| Generated file   | `lib/generated/Assets.dart` |
+| Class name       | `Assets`                    |
+
+For example, you can change the generated output to:
+
+```text
+lib/core/generated/assets.dart
+```
+
+and the class name to:
+
+```text
+AppAssets
+```
+
+---
+
+# 🔤 Asset Naming
+
+Asset names are generated from the path relative to the configured assets directory.
+
+For example:
+
+```text
+assets/images/profile/user.png
+```
+
+becomes:
+
+```dart
+Assets.imagesProfileUser
+```
+
+Directory names are included in the identifier to prevent common filename collisions.
+
+For example:
+
+```text
+assets/icons/home.png
+assets/images/home.png
+```
+
+become:
+
+```dart
+Assets.iconsHome
+Assets.imagesHome
+```
+
+### Special characters
+
+Characters such as:
+
+```text
+-
+_
+.
+@
+(
+)
+space
+```
+
+are treated as separators.
+
+For example:
+
+```text
+assets/images/home_screen.png
+```
+
+becomes:
+
+```dart
+Assets.imagesHomeScreen
+```
+
+and:
+
+```text
+assets/old photos/profile-image@2x.png
+```
+
+becomes a sanitized Dart identifier.
+
+### Numeric names
+
+If an identifier starts with a number, the generator prefixes it with `a` so that it remains a valid Dart identifier.
+
+For example:
+
+```text
+assets/2x/icon.png
+```
+
+produces an identifier beginning with:
+
+```dart
+a2xIcon
+```
+
+### Dart reserved words
+
+If an asset name produces a Dart reserved word such as:
+
+```text
+class
+```
+
+the generator appends `Asset`:
+
+```dart
+classAsset
+```
+
+---
+
+# 🔀 Duplicate Identifiers
+
+The generator detects genuine naming collisions rather than silently dropping assets.
+
+For example:
+
+```text
+assets/images/logo.png
+assets/images_logo.png
+```
+
+could both produce:
+
+```text
+imagesLogo
+```
+
+The generator automatically resolves the collision:
+
+```dart
+static const String imagesLogo =
+    'assets/images/logo.png';
+
+static const String imagesLogo2 =
+    'assets/images_logo.png';
+```
+
+A warning notification identifies the collision so it can be reviewed.
+
+---
+
+# 📐 Deterministic Output
+
+Assets are sorted by their relative path before generation.
+
+This means running the generator multiple times against an unchanged asset tree produces the same output.
+
+For example:
+
+```text
+assets/icons/settings.svg
+assets/images/home.png
+assets/images/logo.png
+```
+
+will consistently appear in that order in `Assets.dart`.
+
+---
+
+# 🏗️ Architecture
+
+The project is intentionally split into small components:
+
+```text
+src/main/kotlin/
+├── actions/
+│   └── GenerateAssetsAction.kt
+│
+├── core/
+│   ├── FlutterProjectDetector.kt
+│   ├── AssetScanner.kt
+│   ├── AssetNameConverter.kt
+│   └── DartAssetsGenerator.kt
+│
+├── settings/
+│   ├── FlutterAssetsGeneratorSettings.kt
+│   └── FlutterAssetsGeneratorConfigurable.kt
+│
+└── notifications/
+    └── Notifier.kt
+```
+
+### `GenerateAssetsAction`
+
+Handles the IDE action, progress reporting, notifications, and VFS refresh.
+
+### `FlutterProjectDetector`
+
+Locates the Flutter project root and configured asset/output directories.
+
+### `AssetScanner`
+
+Recursively scans the assets directory and collects regular, non-hidden files.
+
+### `AssetNameConverter`
+
+Converts an asset's relative path into a valid flat camelCase Dart identifier.
+
+This component contains the naming rules and is intentionally independent of IntelliJ APIs.
+
+### `DartAssetsGenerator`
+
+Builds the asset entries, resolves collisions, and renders the final Dart source.
+
+### `FlutterAssetsGeneratorSettings`
+
+Stores project-level configuration for:
+
+* Assets directory
+* Generated file
+* Class name
+
+---
+
+# 🧵 Background Processing
+
+Asset scanning runs in a background task so large asset directories do not block the IDE UI.
+
+The general flow is:
+
+```text
+Alt+G
+  ↓
+GenerateAssetsAction
+  ↓
+Detect Flutter project
+  ↓
+Scan assets
+  ↓
+Generate identifiers
+  ↓
+Resolve collisions
+  ↓
+Render Assets.dart
+  ↓
+Write file
+  ↓
+Refresh IDE VFS
+  ↓
+Show notification
+```
+
+---
+
+# 🛡️ Error Handling
+
+The plugin is designed to fail gracefully without crashing the IDE.
+
+### Missing Flutter project
+
+If `pubspec.yaml` cannot be found at the project root:
+
+```text
+Warning: Flutter project not detected.
+```
+
+### Missing assets directory
+
+The configured assets directory is checked before scanning.
+
+### Empty assets directory
+
+An empty directory still generates `Assets.dart`:
 
 ```dart
 class Assets {
   Assets._();
-
-  static const String dataAppConfig = 'assets/data/app_config.json';
-  static const String iconsHome = 'assets/icons/home.png';
-  static const String iconsUserProfile = 'assets/icons/user-profile.svg';
-  static const String imagesHome = 'assets/images/home.png';
-  static const String imagesHomeScreen = 'assets/images/home_screen.png';
-  static const String imagesOldPhoto = 'assets/images/old photo.jpg';
 }
 ```
 
-Note `iconsHome` vs. `imagesHome`: both files are literally named
-`home.png`, but their directory prefixes keep the generated identifiers
-distinct, so neither asset is silently dropped or overwritten.
+This keeps the generated file synchronized with the actual asset directory.
 
-**Example 3** - a genuine identifier collision (two *different* relative
-paths that would still produce the same identifier):
+### Unreadable files
+
+Individual inaccessible files are skipped rather than aborting the entire generation process.
+
+### Invalid filenames
+
+Special characters are sanitized before generating Dart identifiers.
+
+### Duplicate identifiers
+
+Collisions are automatically resolved with numeric suffixes:
 
 ```text
-assets/
-├── images/logo.png
-└── images_logo.png     (a stray file directly under assets/)
+imagesHome
+imagesHome2
+imagesHome3
 ```
 
-Both would naively convert to `imagesLogo`. The second one gets
-disambiguated automatically:
+### Write failures
+
+Filesystem errors are caught and displayed through an IDE notification.
+
+Unexpected exceptions are also caught at the action boundary and reported instead of being propagated into the IDE.
+
+---
+
+# 🧰 Requirements
+
+* **JDK 17+**
+* **Gradle 9.0+**
+* **IntelliJ Platform Gradle Plugin 2.x**
+* **Android Studio Ladybug (2024.2)+** for the default target
+
+The included Gradle wrapper handles the required Gradle version.
+
+---
+
+# 🔨 Building
+
+Clone the repository:
+
+```bash
+git clone <repository-url>
+cd FlutterAssetsGenerator
+```
+
+Build the plugin:
+
+```bash
+./gradlew buildPlugin
+```
+
+On Windows:
+
+```bat
+gradlew.bat buildPlugin
+```
+
+The plugin ZIP will be generated under:
+
+```text
+build/distributions/
+```
+
+For example:
+
+```text
+build/distributions/FlutterAssetsGenerator-1.0.0.zip
+```
+
+### Development
+
+Launch a sandboxed IDE with the plugin installed:
+
+```bash
+./gradlew runIde
+```
+
+Verify the plugin against the configured IDE:
+
+```bash
+./gradlew verifyPlugin
+```
+
+Run tests:
+
+```bash
+./gradlew test
+```
+
+---
+
+# 💡 Faster Local Development
+
+The default build targets Android Studio directly.
+
+The first build may download a large Android Studio distribution because the configured platform is used as the compile/test target.
+
+If you only need a faster development loop, the platform dependency can temporarily be changed to an IntelliJ IDEA Community target.
+
+The plugin only depends on:
+
+```text
+com.intellij.modules.platform
+```
+
+and does not use Android-specific APIs.
+
+---
+
+# 🧩 Android Studio Compatibility
+
+The plugin is built using the modern:
+
+```text
+org.jetbrains.intellij.platform
+```
+
+Gradle plugin.
+
+The default configuration targets the Android Studio 2024.2 platform branch.
+
+The plugin declares:
+
+```properties
+pluginSinceBuild=242
+```
+
+which corresponds to the 2024.2 platform baseline.
+
+The upper build range is intentionally left open so the plugin can continue to install on newer Android Studio versions where platform compatibility permits it.
+
+For significantly older Android Studio versions, the platform target and minimum build can be adjusted and the plugin should be re-tested with the desired IDE version.
+
+---
+
+# 🔍 Why This Plugin?
+
+The original **FlutterAssetsGenerator 2.4.2** plugin provided a simple flat asset API such as:
 
 ```dart
-class Assets {
-  Assets._();
-
-  static const String imagesLogo = 'assets/images/logo.png';
-  static const String imagesLogo2 = 'assets/images_logo.png';
-}
+Assets.imageLoading
 ```
 
-...and the notification balloon calls out that a collision was resolved,
-so you know to double check it (and rename the asset if the auto-suffix
-isn't what you want).
+However, the original implementation relies on older IntelliJ Platform APIs and is not compatible with current Android Studio releases.
 
-## Architecture
+This project is a **from-scratch modern implementation** that focuses on the same useful flat asset-generation workflow while using current IntelliJ Platform APIs.
+
+It does **not** copy the original plugin's implementation or legacy IntelliJ API usage.
+
+---
+
+# 🔄 Compatibility With the Legacy Naming Style
+
+The naming behavior is based on the documented legacy compatibility behavior of the upstream project.
+
+The relevant characteristics are:
+
+1. Flat asset identifiers
+2. Parent directories included in generated names
+3. String-based asset constants
+
+For example:
 
 ```text
-actions/
-  GenerateAssetsAction.kt      Orchestrates the Alt+G command; talks to the IDE
-                                (progress, notifications, VFS) and delegates all
-                                actual logic to core/*.
-core/
-  FlutterProjectDetector.kt    Finds the project root / assets dir / output file
-                                using the IDE's own project info - no manual
-                                path entry required.
-  AssetScanner.kt              Recursively walks the assets directory. Extension-
-                                agnostic: every regular, non-hidden file counts.
-  AssetNameConverter.kt        Pure function: asset relative path -> flat, valid,
-                                camelCase Dart identifier (the 2.4.2 "legacy"
-                                naming rules).
-  DartAssetsGenerator.kt       Builds the de-duplicated, sorted list of asset
-                                entries and renders the final Assets.dart source.
-settings/
-  FlutterAssetsGeneratorSettings.kt      Persistent per-project settings
-                                          (assets dir / output file / class name).
-  FlutterAssetsGeneratorConfigurable.kt  Settings > Tools UI for the above.
-notifications/
-  Notifier.kt                  Thin helper around the balloon-notification API.
+assets/images/logo.png
 ```
 
-`core/*` has zero dependencies on IntelliJ Platform APIs - it's plain
-Kotlin operating on `java.io.File` and strings, so it's straightforward to
-unit test or reuse outside the plugin if you ever want to.
+becomes:
 
-## Error handling
+```dart
+Assets.imagesLogo
+```
 
-The plugin is designed to never crash the IDE:
+rather than:
 
-- **No Flutter project** (`pubspec.yaml` missing) → warning notification, no-op.
-- **No assets directory** → warning notification naming the configured path, no-op.
-- **Empty assets directory** (e.g. every asset was just deleted) → still
-  regenerates the file with an empty class body, so `Assets.dart` always
-  reflects reality instead of going stale; the notification makes clear
-  that zero assets were found so it's not mistaken for a bug.
-- **Inaccessible / unreadable files** → skipped individually during the
-  scan rather than aborting the whole run.
-- **Invalid characters in filenames** → sanitized away by `AssetNameConverter`
-  (see above); never produces invalid Dart syntax.
-- **Duplicate generated identifiers** → auto-disambiguated with a numeric
-  suffix; reported in the notification, never silently dropped.
-- **Can't write the output file** (permissions, locked file, missing
-  parent that can't be created, etc.) → caught and reported as an error
-  notification with the underlying message.
-- Any other unexpected exception is caught at the top level of the action
-  and turned into an error notification rather than propagating.
+```dart
+Assets.images.logo
+```
 
-## Android Studio compatibility
+The project intentionally does not reproduce the newer hierarchical API based on typed wrappers such as:
 
-- Built against the **IntelliJ Platform Gradle Plugin 2.x**
-  (`org.jetbrains.intellij.platform`, requires Gradle 9.0+ and JDK 17+),
-  which is the current, actively maintained successor to the old (`0.x`/`1.x`)
-  Gradle IntelliJ Plugin that the original 2.4.2 build used.
-- The Gradle build targets Android Studio directly via the
-  `androidStudio(...)` dependency helper (see `build.gradle.kts` /
-  `gradle.properties` → `platformVersion`), following JetBrains' documented
-  approach for Android Studio plugin development.
-- The plugin only depends on `com.intellij.modules.platform` - it uses no
-  Android-specific (`org.jetbrains.android`) or Dart-plugin-specific APIs,
-  so the same build also works in plain IntelliJ IDEA (Community or
-  Ultimate) with the Flutter/Dart plugins installed, if you ever want that.
-- `pluginSinceBuild=242` in `gradle.properties` corresponds to the 2024.2
-  (Ladybug) platform branch, with `pluginUntilBuild` left **open-ended** so
-  the plugin keeps installing on newer Android Studio releases without
-  needing a republish for every point release. If a future Android Studio
-  version introduces a breaking platform API change, bump `platformVersion`
-  (and re-test) rather than assuming the open-ended range always holds.
-- No deprecated actions/notification APIs are used: actions declare
-  `getActionUpdateThread()` explicitly (required on current versions),
-  and notifications go through `NotificationGroupManager` +
-  a `<notificationGroup>` extension point, not the old
-  `Notifications.Bus`/balloon APIs.
-- The settings UI is implemented with plain Swing (`FormBuilder` +
-  `JBTextField`) rather than the Kotlin UI DSL, specifically because the UI
-  DSL's API has changed across platform releases - for three text fields,
-  the extra Swing boilerplate is worth the long-term source stability.
+```dart
+Assets.images.logo
+```
 
-If you target an Android Studio version significantly older than 2024.2,
-lower `pluginSinceBuild`/`platformVersion` accordingly and re-test; nothing
-in this plugin's own code requires anything newer than a very old platform
-baseline, but the Gradle plugin/toolchain requirements above are hard
-floors.
+---
+
+# 🚫 What This Plugin Does Not Do
+
+This project intentionally keeps the workflow small.
+
+It does not currently provide:
+
+* Automatic file watching
+* Automatic regeneration on every file save
+* YAML configuration inside `pubspec.yaml`
+* Hierarchical asset APIs
+* Typed asset-wrapper classes
+* Android-specific APIs
+* Dart-plugin-specific APIs
+
+The intended workflow is simply:
+
+```text
+Add/change assets
+      ↓
+Press Alt+G
+      ↓
+Assets.dart regenerated
+```
+
+---
+
+# 📄 Generated File
+
+The generated file starts with:
+
+```dart
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// Generated by FlutterAssetsGenerator - press Alt+G to regenerate.
+```
+
+You should not manually edit `Assets.dart`.
+
+Instead, modify the files inside your configured assets directory and run **Alt+G** again.
+
+---
+
+# 🤝 Contributing
+
+Contributions are welcome.
+
+If you find a naming edge case, compatibility issue, or unexpected behavior:
+
+1. Check whether it can be reproduced with a minimal Flutter project.
+2. Open an issue with the asset structure and generated output.
+3. For code changes, submit a pull request with a clear description of the change.
+
+The asset naming logic is intentionally isolated in:
+
+```text
+core/AssetNameConverter.kt
+```
+
+which makes naming behavior relatively easy to test and modify.
+
+---
+
+# 📝 License
+
+This project is released under the **MIT License**.
+
+See [`LICENSE`](LICENSE) for the full license text.
+
+---
+
+# 🙏 Acknowledgements
+
+This project was inspired by the workflow provided by the original **FlutterAssetsGenerator 2.4.2** plugin by `cr1992`.
+
+Original project:
+
+https://github.com/cr1992/FlutterAssetsGenerator
+
+This implementation was developed independently using modern IntelliJ Platform APIs and does not copy the original plugin's source code.
+
+---
+
+## ⭐ Support
+
+If this plugin saves you time, consider giving the repository a ⭐ on GitHub.
+
+Bug reports, compatibility feedback, and pull requests are welcome.

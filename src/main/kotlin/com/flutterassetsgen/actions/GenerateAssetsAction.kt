@@ -78,9 +78,9 @@ class GenerateAssetsAction : AnAction() {
             val buildResult: BuildResult = DartAssetsGenerator.buildEntries(scanned, assetsDirPrefix)
             val dartSource = DartAssetsGenerator.renderDartFile(settings.className, buildResult.entries)
 
-            writeAndRefresh(outputFile, dartSource)
+            val wasWritten = writeAndRefresh(outputFile, dartSource)
 
-            notifySuccess(project, title, settings.outputFile, buildResult)
+            notifySuccess(project, title, settings.outputFile, buildResult, wasWritten)
         } catch (ex: IOException) {
             Notifier.error(project, title, "Failed to generate '${settings.outputFile}': ${ex.message}")
         } catch (ex: SecurityException) {
@@ -90,9 +90,17 @@ class GenerateAssetsAction : AnAction() {
         }
     }
 
-    private fun notifySuccess(project: Project, title: String, outputPath: String, buildResult: BuildResult) {
+    private fun notifySuccess(
+        project: Project,
+        title: String,
+        outputPath: String,
+        buildResult: BuildResult,
+        wasWritten: Boolean
+    ) {
         val message = buildString {
-            if (buildResult.entries.isEmpty()) {
+            if (!wasWritten) {
+                append("$outputPath is already up to date - no changes")
+            } else if (buildResult.entries.isEmpty()) {
                 append("No assets found - wrote an empty $outputPath")
             } else {
                 append("${buildResult.entries.size} asset")
@@ -113,9 +121,22 @@ class GenerateAssetsAction : AnAction() {
         }
     }
 
-    /** Writes [content] to target [file] on disk and refreshes the VFS view. */
-    private fun writeAndRefresh(file: File?, content: String) {
-        if (file == null) return
+    /**
+     * Writes [content] to target [file] on disk and refreshes the VFS view -
+     * but only if [content] actually differs from what's already there.
+     *
+     * Skipping no-op writes avoids needless mtime/VFS churn (which in turn
+     * avoids triggering file watchers, analyzers, and hot-reloads for a file
+     * that didn't really change).
+     *
+     * @return true if the file was written, false if it was already up to date.
+     */
+    private fun writeAndRefresh(file: File?, content: String): Boolean {
+        if (file == null) return false
+
+        if (file.exists() && file.isFile && readTextOrNull(file) == content) {
+            return false
+        }
 
         file.parentFile?.mkdirs()
         file.writeText(content)
@@ -123,5 +144,16 @@ class GenerateAssetsAction : AnAction() {
         ApplicationManager.getApplication().invokeLater {
             LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)
         }
+        return true
     }
+
+    /** Reads [file] as text, returning null instead of throwing if it can't be read. */
+    private fun readTextOrNull(file: File): String? =
+        try {
+            file.readText()
+        } catch (ex: IOException) {
+            null
+        } catch (ex: SecurityException) {
+            null
+        }
 }
