@@ -10,12 +10,10 @@ package bys7.flutterassetsgen.core
  *   icons/user-profile.svg     -> iconsUserProfile
  *   images/old photo.jpg       -> imagesOldPhoto
  *   data/app_config.json       -> dataAppConfig
- *   images/profile/user.png    -> imagesProfileUser
+ *   images/profile/user.png    -> profileUser
  *
- * i.e. every path segment (each subdirectory under the assets root, plus
- * the filename without its extension) is split into words and joined with
- * camelCase - NOT the newer hierarchical/nested API style
- * (`Assets.images.logo`).
+ * i.e. only the immediate parent directory and the filename without its
+ * extension are split into words and joined with camelCase.
  */
 object AssetNameConverter {
 
@@ -37,7 +35,7 @@ object AssetNameConverter {
     /**
      * @param assetRelativePath the asset's path relative to the assets root,
      *   using forward slashes, e.g. "images/profile/user.png"
-     * @return a valid, flat camelCase Dart identifier, e.g. "imagesProfileUser"
+     * @return a valid, flat camelCase Dart identifier, e.g. "profileUser"
      */
     fun toDartIdentifier(assetRelativePath: String): String {
         val lastSlash = assetRelativePath.lastIndexOf('/')
@@ -47,9 +45,8 @@ object AssetNameConverter {
 
         val words = mutableListOf<String>()
         if (dirPart.isNotEmpty()) {
-            dirPart.split('/').forEach { segment ->
-                words += WORD_PATTERN.findAll(segment).map { it.value }
-            }
+            val lastSegment = dirPart.split('/').last()
+            words += WORD_PATTERN.findAll(lastSegment).map { it.value }
         }
         words += WORD_PATTERN.findAll(fileNameWithoutExt).map { it.value }
 
