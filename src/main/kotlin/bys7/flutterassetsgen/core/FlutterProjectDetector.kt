@@ -20,6 +20,9 @@ object FlutterProjectDetector {
     /** Absolute path to the project root, or null if it can't be determined. */
     fun projectRoot(project: Project): File? = project.basePath?.let(::File)
 
+    /** Absolute path to the project's pubspec.yaml, or null if the project root can't be determined. */
+    fun pubspecFile(project: Project): File? = projectRoot(project)?.let { File(it, "pubspec.yaml") }
+
     /**
      * Resolves the configured assets directory under the project root.
      * Returns null if the project root is unknown or the directory doesn't exist.

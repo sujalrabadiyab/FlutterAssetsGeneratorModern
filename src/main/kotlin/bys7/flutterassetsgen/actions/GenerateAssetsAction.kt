@@ -1,9 +1,12 @@
 package bys7.flutterassetsgen.actions
 
-import bys7.flutterassetsgen.core.AssetScanner
-import bys7.flutterassetsgen.core.BuildResult
 import bys7.flutterassetsgen.core.DartAssetsGenerator
+import bys7.flutterassetsgen.core.DeclaredAssetResolver
 import bys7.flutterassetsgen.core.FlutterProjectDetector
+import bys7.flutterassetsgen.core.GenerationOutput
+import bys7.flutterassetsgen.core.GenerationStyle
+import bys7.flutterassetsgen.core.PubspecAssetsEditor
+import bys7.flutterassetsgen.core.toGeneratableAssets
 import bys7.flutterassetsgen.notifications.Notifier
 import bys7.flutterassetsgen.settings.FlutterAssetsGeneratorSettings
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -20,8 +23,24 @@ import java.io.IOException
 
 /**
  * "Generate Flutter Assets" action, bound to Alt+G by default.
+ *
+ * Assets are resolved from `pubspec.yaml`'s `flutter: assets:` declarations (via
+ * [DeclaredAssetResolver]), not by blindly scanning a physical directory - use
+ * "Flutter Configure Paths" (right-click a file/folder in the Project view) to declare what
+ * should be included first.
+ *
+ * By default this uses whichever [GenerationStyle] is currently selected in Settings.
+ *
+ * Deliberately kept as a plain no-arg constructor with an overridable property, rather than a
+ * constructor parameter: IntelliJ Platform instantiates action classes declared in `plugin.xml`
+ * via reflection expecting a genuine zero-arg constructor, which a Kotlin constructor parameter
+ * with a default value does not reliably provide (that needs `@JvmOverloads`, and even then it's
+ * a fragile pattern for reflection-instantiated classes). A property override, resolved through
+ * ordinary virtual dispatch, doesn't have that failure mode.
  */
-class GenerateAssetsAction : AnAction() {
+open class GenerateAssetsAction : AnAction() {
+
+    protected open val forcedStyle: GenerationStyle? = null
 
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
@@ -52,15 +71,23 @@ class GenerateAssetsAction : AnAction() {
             return
         }
 
+        val projectRoot = FlutterProjectDetector.projectRoot(project)
+        val pubspecFile = FlutterProjectDetector.pubspecFile(project)
+        if (projectRoot == null || pubspecFile == null || !pubspecFile.isFile) {
+            Notifier.error(project, title, "Could not resolve pubspec.yaml.")
+            return
+        }
+
         val settings = FlutterAssetsGeneratorSettings.getInstance(project)
 
-        val assetsDir = FlutterProjectDetector.findAssetsDir(project, settings.assetsDir)
-        if (assetsDir == null) {
+        val declaredPaths = PubspecAssetsEditor.readDeclaredPaths(pubspecFile)
+        if (declaredPaths.isEmpty()) {
             Notifier.warning(
                 project,
                 title,
-                "Assets directory '${settings.assetsDir}' was not found. " +
-                        "Create it (or update the path in Settings | Tools | Flutter Assets Generator) and try again."
+                "No assets declared in pubspec.yaml's flutter: assets: section. Right-click a " +
+                        "file or folder in the Project view and choose Flutter Configure Paths -> " +
+                        "Add as Asset Path, then try again."
             )
             return
         }
@@ -72,15 +99,23 @@ class GenerateAssetsAction : AnAction() {
         }
 
         try {
-            val scanned = AssetScanner.scan(assetsDir)
+            val resolvedAssets = DeclaredAssetResolver.resolve(projectRoot, declaredPaths)
+                // Never let the file we're about to write become one of its own inputs.
+                .filterNot { it.file.absoluteFile == outputFile.absoluteFile }
 
-            val assetsDirPrefix = settings.assetsDir.trim('/')
-            val buildResult: BuildResult = DartAssetsGenerator.buildEntries(scanned, assetsDirPrefix)
-            val dartSource = DartAssetsGenerator.renderDartFile(settings.className, buildResult.entries)
+            // assetPath (the printed Dart string) always keeps the real, full project-relative
+            // path; namingPath has settings.assetsDir (e.g. "assets") stripped off the front, so
+            // that conventional folder name doesn't leak into every generated identifier.
+            val generatableAssets = toGeneratableAssets(resolvedAssets, settings.assetsDir)
 
-            val wasWritten = writeAndRefresh(outputFile, dartSource)
+            val config = settings.generationConfig().let { base ->
+                if (forcedStyle != null) base.copy(generationStyle = forcedStyle!!) else base
+            }
+            val result: GenerationOutput = DartAssetsGenerator.generate(generatableAssets, settings.className, config)
 
-            notifySuccess(project, title, settings.outputFile, buildResult, wasWritten)
+            val wasWritten = writeAndRefresh(outputFile, result.dartSource)
+
+            notifySuccess(project, title, settings.outputFile, result, wasWritten)
         } catch (ex: IOException) {
             Notifier.error(project, title, "Failed to generate '${settings.outputFile}': ${ex.message}")
         } catch (ex: SecurityException) {
@@ -94,29 +129,29 @@ class GenerateAssetsAction : AnAction() {
         project: Project,
         title: String,
         outputPath: String,
-        buildResult: BuildResult,
+        result: GenerationOutput,
         wasWritten: Boolean
     ) {
         val message = buildString {
             if (!wasWritten) {
                 append("$outputPath is already up to date - no changes")
-            } else if (buildResult.entries.isEmpty()) {
+            } else if (result.assetCount == 0) {
                 append("No assets found - wrote an empty $outputPath")
             } else {
-                append("${buildResult.entries.size} asset")
-                if (buildResult.entries.size != 1) append("s")
+                append("${result.assetCount} asset")
+                if (result.assetCount != 1) append("s")
                 append(" written to $outputPath")
             }
-            if (buildResult.renamedDuplicates.isNotEmpty()) {
-                append(". Resolved ${buildResult.renamedDuplicates.size} name collision")
-                if (buildResult.renamedDuplicates.size != 1) append("s")
+            if (result.renamedDuplicates.isNotEmpty()) {
+                append(". Resolved ${result.renamedDuplicates.size} name collision")
+                if (result.renamedDuplicates.size != 1) append("s")
                 append(" - see below.")
             }
         }
-        if (buildResult.renamedDuplicates.isEmpty()) {
+        if (result.renamedDuplicates.isEmpty()) {
             Notifier.info(project, title, message)
         } else {
-            val details = buildResult.renamedDuplicates.joinToString("<br/>")
+            val details = result.renamedDuplicates.joinToString("<br/>")
             Notifier.warning(project, title, "$message<br/>$details")
         }
     }

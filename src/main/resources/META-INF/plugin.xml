@@ -1,6 +1,6 @@
 <idea-plugin>
     <id>bys7.flutterassetsgen</id>
-    <name>Flutter Assets Generator (Modern)</name>
+    <name>Flutter Assets Generator</name>
     <vendor url="https://github.com/">Flutter Assets Generator (Modern) contributors</vendor>
     <vendor
         url="https://github.com/sujalrabadiyab/FlutterAssetsGeneratorModern"
@@ -10,17 +10,17 @@
 
     <description><![CDATA[
         <p>
-        Regenerates a flat, type-safe <code>Assets.dart</code> index for a Flutter project's
-        <code>assets/</code> directory with a single keyboard shortcut: <b>Alt+G</b>
+        Flutter Assets Generator automatically scans your Flutter project's assets directory and
+        generates a type-safe <code>Assets.dart</code> file. Choose between flat
+        (<code>Assets.imagesLogo</code>) and hierarchical (<code>Assets.images.logo</code>)
+        generation styles, customize naming conventions and asset reference types, and
+        regenerate the complete asset index with a single keyboard shortcut: <b>Alt+G</b>
         (<b>&#8997;G</b> on macOS).
         </p>
         <p>
-        A small, modern replacement for the classic <i>FlutterAssetsGenerator 2.4.2</i> plugin.
-        Reproduces its flat asset-naming convention (e.g. <code>Assets.imagesLogo</code>, not the
-        newer hierarchical <code>Assets.images.logo</code> style) with no manual asset/folder
-        selection required: just press the shortcut and the whole <code>assets/</code> tree is
-        rescanned and <code>lib/generated/Assets.dart</code> is rewritten from scratch, so added,
-        removed, and renamed assets are always reflected exactly.
+        No dialogs. No manual asset/folder selection. Press the shortcut and the whole
+        <code>assets/</code> tree is rescanned and the generated file is rewritten from scratch,
+        so added, removed, and renamed assets are always reflected exactly.
         </p>
     ]]></description>
 
@@ -29,35 +29,56 @@
          only needs the base platform module and works in Android Studio as well as plain
          IntelliJ IDEA with the Flutter/Dart plugins installed. -->
     <depends>com.intellij.modules.platform</depends>
-        <depends>com.intellij.modules.java</depends>
+    <depends>com.intellij.modules.java</depends>
 
     <actions>
         <action id="FlutterAssetsGenerator.GenerateAssets"
-                class="bys7.flutterassetsgen.actions.GenerateAssetsAction"
-                text="Generate Flutter Assets"
-                description="Scan the assets directory and regenerate Assets.dart"
-                icon="AllIcons.Actions.Refresh">
+            class="bys7.flutterassetsgen.actions.GenerateAssetsAction"
+            text="Generate Flutter Assets"
+            description="Resolve pubspec.yaml's declared asset paths and regenerate Assets.dart, using the Generation Style selected in Settings"
+            icon="AllIcons.Actions.Refresh">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
             <!-- Alt+G on Windows/Linux, Option(Alt)+G on macOS. If this collides with an
                  existing shortcut in your keymap, the IDE will prompt you to resolve the
                  conflict on install; either way you can always rebind it under
-                 Settings | Keymap | Plugins | Flutter Assets Generator (Modern). -->
+                 Settings | Keymap | Plugins | Flutter Assets Generator. -->
             <keyboard-shortcut keymap="$default" first-keystroke="alt G"/>
         </action>
+
+        <!-- Right-click a file/folder in the Project view to declare (or remove) it in
+             pubspec.yaml's flutter: assets: section, without hand-editing YAML. -->
+        <group id="FlutterAssetsGenerator.ConfigurePaths" text="Flutter Configure Paths" popup="true">
+            <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
+
+            <action id="FlutterAssetsGenerator.AddAsAssetPath"
+                class="bys7.flutterassetsgen.actions.AddAsAssetPathAction"
+                text="Add as Asset Path"
+                description="Declare the selected file or folder in pubspec.yaml's flutter: assets: section"/>
+
+            <action id="FlutterAssetsGenerator.AddFolderAndSubfolders"
+                class="bys7.flutterassetsgen.actions.AddFolderAndSubfoldersAction"
+                text="Add Folder and Subfolders"
+                description="Declare the selected folder and every subfolder individually in pubspec.yaml"/>
+
+            <action id="FlutterAssetsGenerator.RemoveFromAssetPaths"
+                class="bys7.flutterassetsgen.actions.RemoveFromAssetPathsAction"
+                text="Remove from Asset Paths"
+                description="Remove the selected file or folder's declaration from pubspec.yaml"/>
+        </group>
     </actions>
 
     <extensions defaultExtensionNs="com.intellij">
         <notificationGroup id="FlutterAssetsGenerator.Notifications"
-                            displayType="BALLOON"
-                            isLogByDefault="true"/>
+            displayType="BALLOON"
+            isLogByDefault="true"/>
 
         <projectService serviceImplementation="bys7.flutterassetsgen.settings.FlutterAssetsGeneratorSettings"/>
 
         <projectConfigurable
-                parentId="tools"
-                instance="bys7.flutterassetsgen.settings.FlutterAssetsGeneratorConfigurable"
-                id="bys7.flutterassetsgen.settings.FlutterAssetsGeneratorConfigurable"
-                displayName="Flutter Assets Generator"
-                nonDefaultProject="false"/>
+            parentId="tools"
+            instance="bys7.flutterassetsgen.settings.FlutterAssetsGeneratorConfigurable"
+            id="bys7.flutterassetsgen.settings.FlutterAssetsGeneratorConfigurable"
+            displayName="Flutter Assets Generator"
+            nonDefaultProject="false"/>
     </extensions>
 </idea-plugin>

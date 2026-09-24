@@ -31,6 +31,9 @@ dependencies {
         pluginVerifier()
         zipSigner()
     }
+
+    testImplementation("org.junit.jupiter:junit-jupiter:5.10.2")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 intellijPlatform {
@@ -40,19 +43,17 @@ intellijPlatform {
         version = properties("pluginVersion").get()
 
         description = """
-            Regenerates a flat, type-safe <code>Assets.dart</code> index for a Flutter
-            project's <code>assets/</code> directory with a single keyboard shortcut
-            (<code>Alt+G</code> / <code>&#8997;G</code> on macOS).
-            <br/><br/>
-            This is a small, modern replacement for the classic FlutterAssetsGenerator
-            2.4.2 plugin, reproducing its flat asset-naming convention
-            (e.g. <code>Assets.imagesLogo</code>) without requiring any manual
-            selection: just press the shortcut and the whole assets tree is rescanned
-            and the generated file is rewritten from scratch.
+            Flutter Assets Generator automatically scans your Flutter project's assets
+            directory and generates a type-safe <code>Assets.dart</code> file. Choose
+            between flat (<code>Assets.imagesLogo</code>) and hierarchical
+            (<code>Assets.images.logo</code>) generation styles, customize naming
+            conventions and asset reference types, and regenerate the complete asset
+            index with a single keyboard shortcut (<code>Alt+G</code> /
+            <code>&#8997;G</code> on macOS).
         """.trimIndent()
 
         vendor {
-            name = "FlutterAssetsGenerator (Modern)"
+            name = "Flutter Assets Generator"
         }
 
         ideaVersion {
@@ -92,6 +93,10 @@ tasks {
 
     buildSearchableOptions {
         enabled = false
+    }
+
+    test {
+        useJUnitPlatform()
     }
 
     wrapper {
