@@ -37,13 +37,13 @@ class FlutterAssetsGeneratorSettings : PersistentStateComponent<FlutterAssetsGen
         var className: String = "Assets"
 
         /** [GenerationStyle] name, e.g. "LEGACY_FLAT" or "HIERARCHICAL". */
-        var generationStyle: String = GenerationStyle.LEGACY_FLAT.name
+        var generationStyle: String = GenerationStyle.HIERARCHICAL.name
 
         /** [NamingStyle] name, e.g. "CAMEL_CASE" or "SNAKE_CASE". */
         var namingStyle: String = NamingStyle.CAMEL_CASE.name
 
         /** [LeafType] name, e.g. "STRING" or "CLASS". */
-        var leafType: String = LeafType.STRING.name
+        var leafType: String = LeafType.CLASS.name
 
         /** Legacy Flat only: whether the immediate parent folder is folded into the flat identifier. */
         var includeParentDirectory: Boolean = true
