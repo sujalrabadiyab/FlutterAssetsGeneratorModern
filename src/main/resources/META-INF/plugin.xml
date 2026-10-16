@@ -48,7 +48,7 @@
         <!-- Right-click a file/folder in the Project view to declare (or remove) it in
              pubspec.yaml's flutter: assets: section, without hand-editing YAML. -->
         <group id="FlutterAssetsGenerator.ConfigurePaths" text="Flutter Configure Paths" popup="true">
-            <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
+            <add-to-group group-id="ProjectViewPopupMenu" anchor="first"/>
 
             <action id="FlutterAssetsGenerator.AddAsAssetPath"
                 class="bys7.flutterassetsgen.actions.AddAsAssetPathAction"
@@ -59,6 +59,11 @@
                 class="bys7.flutterassetsgen.actions.AddFolderAndSubfoldersAction"
                 text="Add Folder and Subfolders"
                 description="Declare the selected folder and every subfolder individually in pubspec.yaml"/>
+
+            <action id="FlutterAssetsGenerator.AddFontsToPubspec"
+                class="bys7.flutterassetsgen.actions.AddFontsToPubspecAction"
+                text="Add Fonts"
+                description="Declare every font file (.ttf, .otf, .ttc) in the selected folder under pubspec.yaml's flutter: fonts: section"/>
 
             <action id="FlutterAssetsGenerator.RemoveFromAssetPaths"
                 class="bys7.flutterassetsgen.actions.RemoveFromAssetPathsAction"
