@@ -1,6 +1,6 @@
 package bys7.flutterassetsgen.core
 
-/** Overall shape of the generated `Assets.dart` file. */
+/** Overall shape of the generated `assets.dart` file. */
 enum class GenerationStyle {
     /** One flat constant per asset, e.g. `Assets.imagesLogo` (FlutterAssetsGenerator 2.4.2-style). */
     LEGACY_FLAT,

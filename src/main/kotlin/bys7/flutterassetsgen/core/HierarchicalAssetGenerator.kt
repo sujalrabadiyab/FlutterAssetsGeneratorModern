@@ -26,19 +26,19 @@ import java.util.IdentityHashMap
  * class $AssetsImagesGen {
  *   const $AssetsImagesGen();
  *
- *   final String logo = 'assets/images/logo.png';
+ *   String get logo => 'assets/images/logo.png';
  * }
  *
  * class $AssetsIconsGen {
  *   const $AssetsIconsGen();
  *
- *   final $AssetsIconsSocialGen social = const $AssetsIconsSocialGen();
+ *   $AssetsIconsSocialGen get social => const $AssetsIconsSocialGen();
  * }
  *
  * class $AssetsIconsSocialGen {
  *   const $AssetsIconsSocialGen();
  *
- *   final String facebook = 'assets/icons/social/facebook.png';
+ *   String get facebook => 'assets/icons/social/facebook.png';
  * }
  * ```
  *
@@ -49,10 +49,10 @@ import java.util.IdentityHashMap
  * through the same numeric-suffix collision resolution as field names, so the output always
  * compiles even in that rare case.
  *
- * Every `final` (non-static) field here sits on a class with a `const` constructor, so its
- * initializer must itself be a compile-time constant - unlike a `static const` field, Dart does
- * not infer that automatically for a plain `final` field, so [fieldDeclaration] and the
- * group-reference fields below add an explicit leading `const` wherever it's required.
+ * Members of the nested group classes are *getters* (`String get logo => '...'`), not `final`
+ * fields. The group classes have `const` constructors and are instantiated as constants, and Dart's
+ * hot reload cannot add an instance field to a class that already has const instances - it needs
+ * a full hot restart. Getters are plain methods, so new assets show up with an ordinary hot reload.
  */
 object HierarchicalAssetGenerator {
 
@@ -160,29 +160,39 @@ object HierarchicalAssetGenerator {
         if (node.subDirs.isEmpty() && node.files.isEmpty()) return ""
 
         val usedFieldNames = HashMap<String, Int>()
-        val prefix = if (isRoot) "static const" else "final"
-        val constPrefix = if (isRoot) "" else "const "
+        val parentName = node.pathSegments.lastOrNull()
         val sb = StringBuilder()
         sb.appendLine()
 
         for ((rawName, sub) in node.subDirs) {
-            val base = AssetNameConverter.groupFieldIdentifier(rawName, config.namingStyle)
+            val base = AssetNameConverter.groupFieldIdentifier(rawName, config.namingStyle, parentName)
             val fieldName = disambiguateField(base, usedFieldNames, config.namingStyle, sub.pathSegments.joinToString("/"), renamedDuplicates)
             val groupClassName = classNameOf.getValue(sub)
-            sb.appendLine("  $prefix $groupClassName $fieldName = $constPrefix$groupClassName();")
+            sb.appendLine("  ${groupDeclaration(fieldName, groupClassName, isRoot)}")
         }
 
         for (asset in node.files) {
             val fileNameWithoutExt = asset.fileName.substringBeforeLast('.', asset.fileName)
-            val base = AssetNameConverter.leafIdentifier(fileNameWithoutExt, config.namingStyle)
+            val base = AssetNameConverter.leafIdentifier(fileNameWithoutExt, config.namingStyle, parentName)
             val fieldName = disambiguateField(base, usedFieldNames, config.namingStyle, asset.assetPath, renamedDuplicates)
             val fieldType = resolveFieldType(asset.fileName, config.leafType)
-            sb.appendLine("  ${fieldDeclaration(fieldName, asset.assetPath, fieldType, prefix)}")
+            sb.appendLine("  ${fieldDeclaration(fieldName, asset.assetPath, fieldType, asGetter = !isRoot)}")
             onLeaf()
         }
 
         return sb.toString()
     }
+
+    /**
+     * Root-level groups are `static const` fields. Groups nested inside another group are
+     * *getters*, never `final` fields - see [fieldDeclaration] for why that matters for hot reload.
+     */
+    private fun groupDeclaration(fieldName: String, groupClassName: String, isRoot: Boolean): String =
+        if (isRoot) {
+            "static const $groupClassName $fieldName = $groupClassName();"
+        } else {
+            "$groupClassName get $fieldName => const $groupClassName();"
+        }
 
     private fun disambiguateField(
         base: String,

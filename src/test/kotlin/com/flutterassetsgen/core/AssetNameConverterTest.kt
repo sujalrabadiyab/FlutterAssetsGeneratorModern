@@ -66,11 +66,32 @@ class AssetNameConverterTest {
     }
 
     @Test
-    fun `leading digit gets an underscore prefix`() {
+    fun `leading digit never produces a private underscore name`() {
         assertEquals(
-            "_123Logo",
+            "i123Logo",
             AssetNameConverter.legacyIdentifier("123-logo.png", NamingStyle.CAMEL_CASE, includeParentDirectory = true)
         )
+    }
+
+    @Test
+    fun `numeric file name without a parent gets an i prefix`() {
+        assertEquals("i1", AssetNameConverter.leafIdentifier("1", NamingStyle.CAMEL_CASE))
+        assertEquals("i_1", AssetNameConverter.leafIdentifier("1", NamingStyle.SNAKE_CASE))
+    }
+
+    @Test
+    fun `numeric file name uses its parent folder as prefix`() {
+        assertEquals("icon1", AssetNameConverter.leafIdentifier("1", NamingStyle.CAMEL_CASE, "icon"))
+        assertEquals("socialIcons1", AssetNameConverter.leafIdentifier("1", NamingStyle.CAMEL_CASE, "social_icons"))
+        assertEquals("icon1", AssetNameConverter.legacyIdentifier("icon/1.png", NamingStyle.CAMEL_CASE, includeParentDirectory = true))
+        assertEquals("icon1", AssetNameConverter.legacyIdentifier("icon/1.png", NamingStyle.CAMEL_CASE, includeParentDirectory = false))
+        assertEquals("i1", AssetNameConverter.legacyIdentifier("1.png", NamingStyle.CAMEL_CASE, includeParentDirectory = true))
+    }
+
+    @Test
+    fun `numeric parent folder falls back to i prefix`() {
+        assertEquals("i20241", AssetNameConverter.leafIdentifier("1", NamingStyle.CAMEL_CASE, "2024"))
+        assertEquals("i2024", AssetNameConverter.groupFieldIdentifier("2024", NamingStyle.CAMEL_CASE))
     }
 
     @Test

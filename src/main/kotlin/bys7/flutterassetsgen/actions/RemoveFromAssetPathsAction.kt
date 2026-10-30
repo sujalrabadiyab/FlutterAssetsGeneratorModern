@@ -40,7 +40,7 @@ class RemoveFromAssetPathsAction : AnAction() {
 
         val title = "Flutter Assets Generator"
         if (removed > 0) {
-            Notifier.info(project, title, "Removed $removed path${if (removed == 1) "" else "s"} from pubspec.yaml. Press Alt+G to regenerate Assets.dart.")
+            Notifier.info(project, title, "Removed $removed path${if (removed == 1) "" else "s"} from pubspec.yaml. Press Alt+G to regenerate assets.dart.")
         } else {
             Notifier.info(project, title, "Nothing to remove - not directly declared (it may only be covered by a parent directory entry).")
         }

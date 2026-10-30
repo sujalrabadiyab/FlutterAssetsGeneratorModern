@@ -1,12 +1,12 @@
 package bys7.flutterassetsgen.core
 
 /**
- * Result of generating a complete `Assets.dart`, regardless of which [GenerationStyle] produced it.
+ * Result of generating a complete `assets.dart`, regardless of which [GenerationStyle] produced it.
  *
  * @param assetCount number of individual asset files represented in [dartSource]
  * @param renamedDuplicates human-readable descriptions of any naming collisions that had to be
  *   auto-resolved (e.g. "images/home.png -> imagesHome2 (name collision with another asset)")
- * @param dartSource the complete, ready-to-write `Assets.dart` source text
+ * @param dartSource the complete, ready-to-write `assets.dart` source text
  */
 data class GenerationOutput(
     val assetCount: Int,
@@ -15,7 +15,7 @@ data class GenerationOutput(
 )
 
 /**
- * Entry point for turning resolved asset files into a complete `Assets.dart` source file.
+ * Entry point for turning resolved asset files into a complete `assets.dart` source file.
  *
  * This object owns nothing but the dispatch: the actual naming/formatting work for each
  * [GenerationStyle] lives in its own generator ([LegacyAssetGenerator] /

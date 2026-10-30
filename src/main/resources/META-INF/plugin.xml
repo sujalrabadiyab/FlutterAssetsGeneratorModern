@@ -11,7 +11,7 @@
     <description><![CDATA[
         <p>
         Flutter Assets Generator automatically scans your Flutter project's assets directory and
-        generates a type-safe <code>Assets.dart</code> file. Choose between flat
+        generates a type-safe <code>assets.dart</code> file. Choose between flat
         (<code>Assets.imagesLogo</code>) and hierarchical (<code>Assets.images.logo</code>)
         generation styles, customize naming conventions and asset reference types, and
         regenerate the complete asset index with a single keyboard shortcut: <b>Alt+G</b>
@@ -35,7 +35,7 @@
         <action id="FlutterAssetsGenerator.GenerateAssets"
             class="bys7.flutterassetsgen.actions.GenerateAssetsAction"
             text="Generate Flutter Assets"
-            description="Resolve pubspec.yaml's declared asset paths and regenerate Assets.dart, using the Generation Style selected in Settings"
+            description="Resolve pubspec.yaml's declared asset paths and regenerate assets.dart, using the Generation Style selected in Settings"
             icon="AllIcons.Actions.Refresh">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
             <!-- Alt+G on Windows/Linux, Option(Alt)+G on macOS. If this collides with an

@@ -54,9 +54,28 @@ object AssetNameConverter {
     }
 
     /**
-     * Makes [identifier] a guaranteed-valid, non-reserved-word Dart identifier: prefixes a
-     * leading digit with `_` (e.g. "123Logo" -> "_123Logo") and appends "Asset"/"_asset" if the
-     * identifier as-is collides with a Dart keyword.
+     * Dart identifiers can't start with a digit, and the obvious workaround - a leading `_` -
+     * makes the member library-private, so it couldn't be used from the rest of the app. Instead,
+     * when [words] starts with a digit (e.g. `1.png`), a readable prefix is put in front of it:
+     * the name of the [parentWords] folder when there is one (`icon/1.png` -> `icon1`), or a
+     * plain `i` otherwise (`1.png` -> `i1`). A parent folder that itself starts with a digit
+     * (`2024/1.png`) can't serve as the prefix, so `i` is put in front of it too (`i20241`).
+     */
+    private fun guardLeadingDigit(words: List<String>, parentWords: List<String>): List<String> {
+        if (words.firstOrNull()?.firstOrNull()?.isDigit() != true) return words
+        val prefix = if (parentWords.isEmpty() || parentWords.first().first().isDigit()) {
+            listOf("i") + parentWords
+        } else {
+            parentWords
+        }
+        return prefix + words
+    }
+
+    /**
+     * Makes [identifier] a guaranteed-valid, non-reserved-word Dart identifier: as a last resort
+     * prefixes a leading digit with `_` (callers normally avoid that via [guardLeadingDigit],
+     * since `_` makes the member private) and appends "Asset"/"_asset" if the identifier as-is
+     * collides with a Dart keyword.
      */
     fun sanitize(identifier: String, style: NamingStyle): String {
         var id = identifier.ifEmpty { "asset" }
@@ -80,21 +99,25 @@ object AssetNameConverter {
         val fileName = if (lastSlash >= 0) assetRelativePath.substring(lastSlash + 1) else assetRelativePath
         val fileNameWithoutExt = fileName.substringBeforeLast('.', fileName)
 
-        val allWords = mutableListOf<String>()
-        if (includeParentDirectory && dirPart.isNotEmpty()) {
-            val lastSegment = dirPart.split('/').last()
-            allWords += words(lastSegment)
-        }
-        allWords += words(fileNameWithoutExt)
+        val parentWords = if (dirPart.isNotEmpty()) words(dirPart.split('/').last()) else emptyList()
+        val fileWords = words(fileNameWithoutExt)
 
-        return sanitize(join(allWords, style), style)
+        val allWords = if (includeParentDirectory) parentWords + fileWords else fileWords
+        // When the parent is already part of the name, it must not be added again as a digit prefix.
+        val guarded = guardLeadingDigit(allWords, if (includeParentDirectory) emptyList() else parentWords)
+
+        return sanitize(join(guarded, style), style)
     }
 
-    /** Identifier for a single filename (no extension) - used for hierarchical leaf field names. */
-    fun leafIdentifier(fileNameWithoutExt: String, style: NamingStyle): String =
-        sanitize(join(words(fileNameWithoutExt), style), style)
+    /**
+     * Identifier for a single filename (no extension) - used for hierarchical leaf field names.
+     * [parentName] is the folder the file lives in, used as a readable prefix when the file name
+     * starts with a digit (`icon/1.png` -> `icon1`); without one the prefix is `i` (`1.png` -> `i1`).
+     */
+    fun leafIdentifier(fileNameWithoutExt: String, style: NamingStyle, parentName: String? = null): String =
+        sanitize(join(guardLeadingDigit(words(fileNameWithoutExt), words(parentName.orEmpty())), style), style)
 
     /** Identifier for a single raw directory segment name - used for hierarchical group field names. */
-    fun groupFieldIdentifier(rawSegmentName: String, style: NamingStyle): String =
-        sanitize(join(words(rawSegmentName), style), style)
+    fun groupFieldIdentifier(rawSegmentName: String, style: NamingStyle, parentName: String? = null): String =
+        sanitize(join(guardLeadingDigit(words(rawSegmentName), words(parentName.orEmpty())), style), style)
 }

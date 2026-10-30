@@ -92,7 +92,7 @@ class PubspecDrivenGenerationTest {
         assertTrue(result.dartSource.contains("static const \$AssetsImagesGen images = \$AssetsImagesGen();"))
         assertTrue(result.dartSource.contains("static const \$AssetsFontsGen fonts = \$AssetsFontsGen();"))
         assertTrue(result.dartSource.contains("static const String villasPrivacyPolicy = 'assets/villas_privacy_policy.html';"))
-        assertTrue(result.dartSource.contains("final String backIconUnpress = 'assets/images/common/back_icon_unpress.png';"))
+        assertTrue(result.dartSource.contains("String get backIconUnpress => 'assets/images/common/back_icon_unpress.png';"))
     }
 
     @Test
@@ -113,10 +113,12 @@ class PubspecDrivenGenerationTest {
             assets, "Assets", GenerationConfig(generationStyle = GenerationStyle.HIERARCHICAL)
         )
 
-        // "fonts/CustomFont.ttf" isn't under the "assets" root, so it's untouched by the strip
-        // and becomes its own top-level constant, still with its own real path. ("CustomFont" is
-        // one un-separated word, so camelCase lowercases it entirely - existing, unrelated behavior.)
-        assertTrue(result.dartSource.contains("static const String customfont = 'fonts/CustomFont.ttf';"))
+        // "fonts/CustomFont.ttf" isn't under the "assets" root, so it's untouched by the strip:
+        // its own top-level folder becomes its own group, still with its own real path.
+        // ("CustomFont" is one un-separated word, so camelCase lowercases it entirely - existing,
+        // unrelated behavior.)
+        assertTrue(result.dartSource.contains("static const \$AssetsFontsGen fonts = \$AssetsFontsGen();"))
+        assertTrue(result.dartSource.contains("String get customfont => 'fonts/CustomFont.ttf';"))
         assertTrue(result.dartSource.contains("static const String logo = 'assets/logo.png';"))
     }
 }

@@ -44,7 +44,7 @@ intellijPlatform {
 
         description = """
             Flutter Assets Generator automatically scans your Flutter project's assets
-            directory and generates a type-safe <code>Assets.dart</code> file. Choose
+            directory and generates a type-safe <code>assets.dart</code> file. Choose
             between flat (<code>Assets.imagesLogo</code>) and hierarchical
             (<code>Assets.images.logo</code>) generation styles, customize naming
             conventions and asset reference types, and regenerate the complete asset

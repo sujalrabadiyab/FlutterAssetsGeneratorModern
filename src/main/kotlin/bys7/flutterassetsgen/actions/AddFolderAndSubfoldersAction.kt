@@ -51,7 +51,7 @@ class AddFolderAndSubfoldersAction : AnAction() {
 
         val title = "Flutter Assets Generator"
         if (added > 0) {
-            Notifier.info(project, title, "Added $added folder path${if (added == 1) "" else "s"} to pubspec.yaml. Press Alt+G to regenerate Assets.dart.")
+            Notifier.info(project, title, "Added $added folder path${if (added == 1) "" else "s"} to pubspec.yaml. Press Alt+G to regenerate assets.dart.")
         } else {
             Notifier.info(project, title, "Nothing to add - every folder is already declared.")
         }

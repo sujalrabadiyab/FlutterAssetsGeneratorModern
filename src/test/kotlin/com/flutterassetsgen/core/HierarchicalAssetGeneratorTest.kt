@@ -25,12 +25,12 @@ class HierarchicalAssetGeneratorTest {
         assertTrue(result.dartSource.contains("static const \$AssetsIconsGen icons = \$AssetsIconsGen();"))
         assertTrue(result.dartSource.contains("static const \$AssetsDataGen data = \$AssetsDataGen();"))
         assertTrue(result.dartSource.contains("class \$AssetsImagesGen {"))
-        assertTrue(result.dartSource.contains("final String logo = 'assets/images/logo.png';"))
-        assertTrue(result.dartSource.contains("final String homeScreen = 'assets/images/home_screen.png';"))
+        assertTrue(result.dartSource.contains("String get logo => 'assets/images/logo.png';"))
+        assertTrue(result.dartSource.contains("String get homeScreen => 'assets/images/home_screen.png';"))
         assertTrue(result.dartSource.contains("class \$AssetsIconsGen {"))
-        assertTrue(result.dartSource.contains("final String userProfile = 'assets/icons/user-profile.svg';"))
+        assertTrue(result.dartSource.contains("String get userProfile => 'assets/icons/user-profile.svg';"))
         assertTrue(result.dartSource.contains("class \$AssetsDataGen {"))
-        assertTrue(result.dartSource.contains("final String appConfig = 'assets/data/app_config.json';"))
+        assertTrue(result.dartSource.contains("String get appConfig => 'assets/data/app_config.json';"))
         assertEquals(4, result.assetCount)
     }
 
@@ -58,7 +58,7 @@ class HierarchicalAssetGeneratorTest {
         assertTrue(result.dartSource.contains("static const String villasPrivacyPolicy = 'assets/villas_privacy_policy.html';"))
 
         assertTrue(result.dartSource.contains("class \$AssetsCommonGen {"))
-        assertTrue(result.dartSource.contains("final String backIconUnpress = 'assets/images/common/back_icon_unpress.png';"))
+        assertTrue(result.dartSource.contains("String get backIconUnpress => 'assets/images/common/back_icon_unpress.png';"))
     }
 
     @Test
@@ -71,12 +71,12 @@ class HierarchicalAssetGeneratorTest {
         val result = DartAssetsGenerator.generate(assets, "Assets", config)
 
         assertTrue(result.dartSource.contains("class \$AssetsIconsGen {"))
-        // Non-static "final" field on a const-constructible class MUST spell out "const" on its
-        // initializer, or it's a compile error ("field is initialized with a non-constant value").
-        assertTrue(result.dartSource.contains("final \$AssetsIconsSocialGen social = const \$AssetsIconsSocialGen();"))
-        assertTrue(result.dartSource.contains("final String gear = 'assets/icons/gear.png';"))
-        assertTrue(result.dartSource.contains("class \$AssetsIconsSocialGen {"))
-        assertTrue(result.dartSource.contains("final String facebook = 'assets/icons/social/facebook.png';"))
+        // Group class names come from the folder's own name (not its full path), and nested
+        // groups are getters returning a const instance - never `final` fields (hot reload).
+        assertTrue(result.dartSource.contains("\$AssetsSocialGen get social => const \$AssetsSocialGen();"))
+        assertTrue(result.dartSource.contains("String get gear => 'assets/icons/gear.png';"))
+        assertTrue(result.dartSource.contains("class \$AssetsSocialGen {"))
+        assertTrue(result.dartSource.contains("String get facebook => 'assets/icons/social/facebook.png';"))
     }
 
     @Test
@@ -99,7 +99,7 @@ class HierarchicalAssetGeneratorTest {
         // Root: already a `static const` context, so no redundant explicit `const` needed.
         assertTrue(result.dartSource.contains("static const AssetGenImage logo = AssetGenImage('assets/logo.png');"))
         // Nested: `final` field on a const class - explicit `const` is required to compile.
-        assertTrue(result.dartSource.contains("final AssetGenImage icon = const AssetGenImage('assets/images/icon.png');"))
+        assertTrue(result.dartSource.contains("AssetGenImage get icon => const AssetGenImage('assets/images/icon.png');"))
     }
 
     @Test
@@ -111,8 +111,8 @@ class HierarchicalAssetGeneratorTest {
         val config = GenerationConfig(generationStyle = GenerationStyle.HIERARCHICAL, leafType = LeafType.CLASS)
         val result = DartAssetsGenerator.generate(assets, "Assets", config)
 
-        assertTrue(result.dartSource.contains("final String config = 'assets/data/config.json';"))
-        assertTrue(result.dartSource.contains("final String intro = 'assets/videos/intro.mp4';"))
+        assertTrue(result.dartSource.contains("String get config => 'assets/data/config.json';"))
+        assertTrue(result.dartSource.contains("String get intro => 'assets/videos/intro.mp4';"))
     }
 
     @Test
@@ -132,7 +132,7 @@ class HierarchicalAssetGeneratorTest {
         val result = DartAssetsGenerator.generate(assets, "Assets", config)
 
         assertTrue(result.dartSource.contains("app_icons ="))
-        assertTrue(result.dartSource.contains("final String home_screen ="))
+        assertTrue(result.dartSource.contains("String get home_screen =>"))
     }
 
     @Test

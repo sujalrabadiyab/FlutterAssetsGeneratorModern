@@ -2,7 +2,7 @@
 
 A configurable asset code generator for **Android Studio** and **IntelliJ IDEA**.
 
-Scans your Flutter project's `assets/` directory and generates `Assets.dart` using your chosen naming and generation settings.
+Scans your Flutter project's `assets/` directory and generates `assets.dart` using your chosen naming and generation settings.
 
 ## Features
 

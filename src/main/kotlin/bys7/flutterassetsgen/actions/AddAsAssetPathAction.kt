@@ -50,7 +50,7 @@ class AddAsAssetPathAction : AnAction() {
         val title = "Flutter Assets Generator"
         when {
             added > 0 && skipped == 0 ->
-                Notifier.info(project, title, "Added $added path${plural(added)} to pubspec.yaml. Press Alt+G to regenerate Assets.dart.")
+                Notifier.info(project, title, "Added $added path${plural(added)} to pubspec.yaml. Press Alt+G to regenerate assets.dart.")
             added > 0 ->
                 Notifier.info(project, title, "Added $added path${plural(added)}; $skipped already declared or covered. Press Alt+G to regenerate.")
             else ->

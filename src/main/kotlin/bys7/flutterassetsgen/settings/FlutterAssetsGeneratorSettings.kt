@@ -31,7 +31,7 @@ class FlutterAssetsGeneratorSettings : PersistentStateComponent<FlutterAssetsGen
         var assetsDir: String = "assets"
 
         /** Path to the generated Dart file, relative to the project root. */
-        var outputFile: String = "lib/generated/Assets.dart"
+        var outputFile: String = "lib/generated/assets.dart"
 
         /** Name of the generated Dart class. */
         var className: String = "Assets"
@@ -64,9 +64,9 @@ class FlutterAssetsGeneratorSettings : PersistentStateComponent<FlutterAssetsGen
         }
 
     var outputFile: String
-        get() = state.outputFile.ifBlank { "lib/generated/Assets.dart" }
+        get() = state.outputFile.ifBlank { "lib/generated/assets.dart" }
         set(value) {
-            state.outputFile = value.trim().trim('/').ifBlank { "lib/generated/Assets.dart" }
+            state.outputFile = value.trim().trim('/').ifBlank { "lib/generated/assets.dart" }
         }
 
     var className: String
